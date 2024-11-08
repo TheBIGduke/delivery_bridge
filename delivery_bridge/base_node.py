@@ -13,6 +13,7 @@ from delivery_bridge.topics.pose_subscriber import PoseSubscriber
 from delivery_bridge.topics.map_subscriber import MapSubscriber
 from delivery_bridge.topics.pose_publisher import PosePublisher
 from delivery_bridge.topics.cmd_vel_publisher import CmdVelPublisher
+from delivery_bridge.clients.navigation_client import NavigationClient
 
 
 class BaseNode(Node):
@@ -86,6 +87,8 @@ class BaseNode(Node):
             settings.INITIAL_POSE.TOPIC_TYPE,
         )
 
+        self.navigation_client = NavigationClient(self)
+
         self.logger.info("... BaseNode initialized")
 
         emitEvent(
@@ -107,7 +110,7 @@ class BaseNode(Node):
         self.map_subscriber.try_subscribe()
         self.cmd_vel_publisher.try_create_publisher()
         self.pose_publisher.try_create_publisher()
-        # self.navigation_client.try_create_client()
+        self.navigation_client.try_create_client()
         self.logger.info("Topics initialized")
 
 
