@@ -1,5 +1,5 @@
 import os
-import random
+# import random
 
 from .settings import APP_DATA_DIR
 

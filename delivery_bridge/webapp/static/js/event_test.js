@@ -2,10 +2,6 @@ var toast_element = document.getElementById('toast_element');
 var toast_title = document.getElementById('toast_title');
 var toast_body = document.getElementById('toast_body');
 
-// var notification_toast_element = document.getElementById('notification_toast_element');
-// var notification_toast_title = document.getElementById('notification_toast_title');
-// var notification_toast_body = document.getElementById('notification_toast_body');
-
 function send_message(message){
   console.log("Sending Message to server");
   socketio.emit('messages', data=message);
@@ -142,5 +138,5 @@ socketio.on("battery", (msg) => {
 });
 socketio.on('robot_pose', function(data) {
   //console.log(data);
-  position_element.innerHTML = `(${data.position_x.toFixed(2)}, ${data.position_y.toFixed(2)}, ${data.orientation_z.toFixed(2)})`;
+  position_element.innerHTML = `(${data.position_x.toFixed(2)}, ${data.position_y.toFixed(2)}, ${data.orientation.toFixed(2)})`;
 });

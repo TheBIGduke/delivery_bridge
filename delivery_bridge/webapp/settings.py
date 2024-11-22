@@ -133,13 +133,13 @@ class FunctionManager:
         PROCESS_FOR_STATIC: Process = Process(),
         PROCESS_FOR_DELIVERY: Process = Process(
             COMMANDS=[
-                (
-                    "ros2 run robot_core amcl_robot_pose"
-                )
+                # (
+                #     "ros2 run robot_core amcl_robot_pose"
+                # )
             ]
         ),
         PROCESS_FOR_CRUISER: Process = Process(
-            COMMANDS=[ ("ros2 run robot_core amcl_robot_pose") ]
+            COMMANDS=[] #[ ("ros2 run robot_core amcl_robot_pose") ]
         ),
     ):
         self.FUNCTION_TO_LOAD_ON_STARTUP: FunctionMode = (
@@ -191,7 +191,7 @@ class Settings:
         self.SECRET_KEY: str = SECRET_KEY #"yxio$l!%v7#mgh9736%2bsw$)+owmdt(_2q5_pvhaltz*s+p)#"
         # ROS TOPICS TO LISTEN
         self.MAP: Map = Map()
-        self.POSE_TO_SET: str = "same"  # "last_mode", "same", ""
+        self.POSE_TO_SET: str = "last_mode"  # "last_mode", "same", ""
         # Topic to set the robot pose
         self.INITIAL_POSE: PoseTopic = PoseTopic(
             "/initialpose",

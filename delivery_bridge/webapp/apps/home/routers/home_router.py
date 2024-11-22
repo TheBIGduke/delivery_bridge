@@ -35,9 +35,9 @@ async def get_test_events(request: Request):
     return templates.TemplateResponse("home/event_test.html", {"request": request})
 
 
-# @router.get("/delivery", response_class=HTMLResponse)
-# async def get_delivery(request: Request):
-#     if request.state.user is None:
-#         raise NotAuthenticatedException()
-#     return templates.TemplateResponse("home/delivery.html", {"request": request})
+@router.get("/delivery", response_class=HTMLResponse)
+async def get_delivery(request: Request):
+    if request.state.user is None:
+        raise NotAuthenticatedException()
+    return templates.TemplateResponse("home/delivery.html", {"request": request})
 

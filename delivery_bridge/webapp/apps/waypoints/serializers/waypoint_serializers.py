@@ -24,11 +24,9 @@ class WaypointSerializer(BaseModel):
             name=waypoint.name,
             is_mandatory=waypoint.is_mandatory,
             description=waypoint.description,
-            position_x=round(waypoint.position_x, 2) if waypoint.position_x else None,
-            position_y=round(waypoint.position_y, 2) if waypoint.position_y else None,
-            orientation=round(waypoint.orientation, 2)
-            if waypoint.orientation
-            else None,
+            position_x=round(waypoint.position_x, 2) if waypoint.position_x else 0.0,
+            position_y=round(waypoint.position_y, 2) if waypoint.position_y else 0.0,
+            orientation=round(waypoint.orientation, 2) if waypoint.orientation else 0.0,
         )
 
 

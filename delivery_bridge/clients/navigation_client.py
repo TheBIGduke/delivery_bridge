@@ -15,15 +15,14 @@ logger = logging.getLogger("ros_log")
 # Third apps
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import PoseStamped
-from nav2_msgs.action import (
-    NavigateToPose,
-)
+from nav2_msgs.action import NavigateToPose
 
 # Serializers
-# from delivery_bridge.webapp.apps.navigation.serializers.navigation_serializers import (
-#     NavigationState,
-# )
+from delivery_bridge.webapp.apps.navigation.serializers.navigation_serializers import (
+    NavigationState,
+)
 
+"""
 class NavigationState():
     READY = 0, "Navigation is ready to receive a goal"
     ACTIVE = 1, "Navigation is processing a goal"
@@ -40,11 +39,11 @@ class NavigationState():
     RECALLING = 7, "Navigation received a cancel request and is recalling a goal"
     RECALLED = 8, "Navigation successfully recalled a goal"
     LOST = 9, "Navigation lost connection to the action server"
+"""
 
 class NavigationClient:
     def __init__(self, node: Node):
         self.node = node
-
         self.goal_handle = None
         self.result_future = None
         self.last_dr = 0.0
@@ -53,10 +52,9 @@ class NavigationClient:
         self.count_lost = 0
         self.goal_position_x = 0.0
         self.goal_position_y = 0.0
-        self.goal_orientation_z = 0.0
+        self.goal_orientation = 0.0
         self.status: NavigationState = NavigationState.READY
         # self.status = "READY"
-
         self.nav_to_pose_client = None
 
     def try_create_client(self):
@@ -93,7 +91,7 @@ class NavigationClient:
     def feedback_callback(self, feedback_msg):
         pass
 
-    def send_goal(self, position_x, position_y, orientation_z):
+    def send_goal(self, position_x, position_y, orientation):
         while not self.nav_to_pose_client.wait_for_server(timeout_sec=1.0):
             logger.debug("NavigationClient is not ready yet, retrying...")
 
@@ -103,10 +101,10 @@ class NavigationClient:
         self.count_lost = 0
         self.goal_position_x = position_x
         self.goal_position_y = position_y
-        self.goal_orientation_z = orientation_z
+        self.goal_orientation = orientation
 
         q_x, q_y, q_z, q_w = tf_transformations.quaternion_from_euler(
-            0.0, 0.0, orientation_z
+            0.0, 0.0, orientation
         )
         pose = PoseStamped()
         pose.header.frame_id = "map"
@@ -123,11 +121,11 @@ class NavigationClient:
         goal_msg.pose = pose
         goal_msg.behavior_tree = ""
 
-        logger.info(
-            "Navigating to x: {:0.2f}, y: {:0.2f} ...".format(
-                goal_msg.pose.pose.position.x, goal_msg.pose.pose.position.y
-            )
-        )
+        # logger.info(
+        #     "Navigating to x: {:0.2f}, y: {:0.2f} ...".format(
+        #         goal_msg.pose.pose.position.x, goal_msg.pose.pose.position.y
+        #     )
+        # )
 
         send_goal_future = self.nav_to_pose_client.send_goal_async(
             goal_msg, feedback_callback=self.feedback_callback
@@ -206,7 +204,7 @@ if __name__ == "__main__":
     waypoint = [float(x) for x in waypoint]
     
     # show loggers
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
     rclpy.init()
     node = rclpy.create_node("navigation_client")
     thread = threading.Thread(target=rclpy.spin, args=[node])
@@ -249,13 +247,13 @@ if __name__ == "__main__":
             nav.last_doz = delta_orientation_z
 
             out_string = f"NavFb ETA:{eta:2.1f} s, "
-            out_string += f"Dr:{dr:2.2f} m, "
-            out_string += f"Deu:{euclidean_distance:2.2f} m, "
-            out_string += f"doz: {delta_orientation_z:2.1f} rad, "
-            out_string += f"Tt:{tt:2.1f} s, "
-            out_string += f"R:{r},\t "
-            out_string += f"V:{delta_dr:2.2f} m/s, "
-            out_string += f"d_doz:{delta_doz:2.1f} rad/s"
+            # out_string += f"Dr:{dr:2.2f} m, "
+            # out_string += f"Deu:{euclidean_distance:2.2f} m, "
+            # out_string += f"doz: {delta_orientation_z:2.1f} rad, "
+            # out_string += f"Tt:{tt:2.1f} s, "
+            # out_string += f"R:{r},\t "
+            # out_string += f"V:{delta_dr:2.2f} m/s, "
+            # out_string += f"d_doz:{delta_doz:2.1f} rad/s"
             logger.info(out_string)
             nav.last_t0 = time.time()
             if delta_dr >= 0.0 and delta_doz == 0.0:

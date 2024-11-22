@@ -13,6 +13,7 @@ from delivery_bridge.webapp.apps.waypoints.cruds.waypoint_cruds import (
 from delivery_bridge.webapp.apps.waypoints.forms.waypoint_forms import (
     WaypointCreateForm,
     WaypointUpdateForm,
+    WaypointCreateFormManual
 )
 from delivery_bridge.webapp.apps.waypoints.models import Waypoint
 from delivery_bridge.webapp.apps.waypoints.serializers.waypoint_serializers import (
@@ -118,7 +119,7 @@ def create_waypoint(waypoint_form: WaypointCreateForm):
     status_code=status.HTTP_201_CREATED,
     summary="Create WP with manual assignation of coordinates"
 )
-def create_waypoint(waypoint_form: WaypointUpdateForm):
+def create_waypoint(waypoint_form: WaypointCreateFormManual):
     """
     Crear waypoint con asignación manual de coordenadas
 

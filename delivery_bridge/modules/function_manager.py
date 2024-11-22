@@ -18,6 +18,7 @@ from delivery_bridge.webapp.settings import FunctionMode
 from delivery_bridge.webapp.settings import settings #, APP_DATA_DIR
 from delivery_bridge.topics.pose_subscriber import RobotPoseData
 from delivery_bridge.base_node import base_node
+from delivery_bridge.modules.navigation_manager import navigation_manager
 
 
 class FunctionManager(threading.Thread):
@@ -128,7 +129,7 @@ class FunctionManager(threading.Thread):
             self.currently_changing_funct = True
 
             # cancel navigation and stop robot
-            # navigation_manager.cancel_navigation()
+            navigation_manager.cancel_navigation() #---------------------------
             base_node.cmd_vel_publisher.publish(0.0, 0.0)
 
             # get last pose
