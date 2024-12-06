@@ -10,11 +10,12 @@ from delivery_bridge.webapp.settings import settings
 
 from delivery_bridge.topics.battery_subscriber import BatterySubscriber
 from delivery_bridge.topics.pose_subscriber import PoseSubscriber
-from delivery_bridge.topics.map_subscriber import MapSubscriber
 from delivery_bridge.topics.pose_publisher import PosePublisher
 from delivery_bridge.topics.cmd_vel_publisher import CmdVelPublisher
 from delivery_bridge.clients.navigation_client import NavigationClient
-
+# from delivery_bridge.clients.clear_costmap_client import ClearEntireCostmap
+from delivery_bridge.topics.frontal_free_subscriber import FrontalFreeSubscriber
+from delivery_bridge.topics.cmd_vel_nav_subscriber import CmdVelNavSubscriber
 
 class BaseNode(Node):
     def __init__(self):
@@ -70,11 +71,6 @@ class BaseNode(Node):
             settings.POSE.MAX_EMIT_RATE,
         )
 
-        self.map_subscriber = MapSubscriber(
-            self,
-            settings.MAP.TOPIC_NAME,
-        )
-
         self.cmd_vel_publisher = CmdVelPublisher(
             self,
             settings.CMD_VEL.TOPIC_NAME,
@@ -88,6 +84,23 @@ class BaseNode(Node):
         )
 
         self.navigation_client = NavigationClient(self)
+        # self.clear_costmap_client = ClearEntireCostmap()
+
+        self.frontal_free_subscriber = FrontalFreeSubscriber(
+            self,
+            settings.FRONTALFREE.TOPIC_NAME,
+            settings.FRONTALFREE.TOPIC_TYPE,
+            settings.FRONTALFREE.DISTANCE_SAFE,
+            settings.FRONTALFREE.MAX_EMIT_RATE,
+        )
+        # ros2 topic pub --rate 15 /frontal_free std_msgs/msg/Float32 data:\ 1.0
+
+        self.cmd_vel_nav_subscriber = CmdVelNavSubscriber(
+            self,
+            settings.CMD_VEL_NAV.TOPIC_NAME,
+            settings.CMD_VEL_NAV.TOPIC_TYPE,
+            settings.CMD_VEL_NAV.MAX_EMIT_RATE,
+        )
 
         self.logger.info("... BaseNode initialized")
 
@@ -107,10 +120,11 @@ class BaseNode(Node):
         self.logger.info("Initializing topics ...")
         self.battery_subscriber.try_subscribe()
         self.pose_subscriber.try_subscribe()
-        self.map_subscriber.try_subscribe()
         self.cmd_vel_publisher.try_create_publisher()
         self.pose_publisher.try_create_publisher()
         self.navigation_client.try_create_client()
+        self.frontal_free_subscriber.try_subscribe()
+        self.cmd_vel_nav_subscriber.try_subscribe()
         self.logger.info("Topics initialized")
 
 

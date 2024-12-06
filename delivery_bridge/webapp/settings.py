@@ -1,7 +1,7 @@
 import os
 import json
 import logging
-import requests
+# import requests
 from delivery_bridge.utils import EnumWithDescription as Enum
 
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = "6558c21a0068b9a84411f5037dcb76a422c0e73aad5a96bba92ded0d9bd5583f"
 APP_DATA_DIR = os.path.join(os.path.expanduser("~"), ".delivery_bridge")
 
-
+"""
 class Map:
     def __init__(
         self,
@@ -26,6 +26,7 @@ class Map:
 
     def to_dict(self):
         return self.__dict__.copy()
+"""
 
 class PoseTopic:
     def __init__(
@@ -93,6 +94,44 @@ class CmdVel:
     def to_dict(self):
         return self.__dict__.copy()
 
+class FrontalFree:
+    def __init__(
+        self,
+        TOPIC_NAME: str = "/frontal_free",
+        TOPIC_TYPE: str = "std_msgs/Float32",
+        MAX_EMIT_RATE: int = -1,
+        DISTANCE_SAFE: float = 0.8,
+    ):
+        self.TOPIC_NAME: str = TOPIC_NAME
+        self.TOPIC_TYPE: str = TOPIC_TYPE  # supported: std_msgs/Float64
+        self.MAX_EMIT_RATE: int = MAX_EMIT_RATE  # Hz, 0 for unlimited
+        self.DISTANCE_SAFE: float = DISTANCE_SAFE
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)
+
+    def to_dict(self):
+        return self.__dict__.copy()
+
+class CmdVelNav:
+    def __init__(
+        self,
+        TOPIC_NAME: str = "/cmd_vel_nav",
+        TOPIC_TYPE: str = "geometry_msgs/Twist",
+        MAX_EMIT_RATE: int = 10,
+    ):
+        self.TOPIC_NAME: str = TOPIC_NAME
+        self.TOPIC_TYPE: str = TOPIC_TYPE
+        self.MAX_EMIT_RATE: int = MAX_EMIT_RATE
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(**data)
+
+    def to_dict(self):
+        return self.__dict__.copy()
+
 
 class FunctionMode(Enum):   # Functionality Modes
     STOP = "stopped", "Detenido"
@@ -133,9 +172,9 @@ class FunctionManager:
         PROCESS_FOR_STATIC: Process = Process(),
         PROCESS_FOR_DELIVERY: Process = Process(
             COMMANDS=[
-                # (
-                #     "ros2 run robot_core amcl_robot_pose"
-                # )
+                (
+                    "ros2 run robot_core frontal_free"
+                )
             ]
         ),
         PROCESS_FOR_CRUISER: Process = Process(
@@ -185,12 +224,43 @@ class FunctionManager:
         else:
             return Process()
 
+class NavigationManager:
+    """
+    if ENABLE_GOAL_SUPERVISOR=True, the goal supervisor will be enabled.
+    The supervisor will check if robot reached the neighborhood of the goal, and mark
+    the goal as reached.
+    """
+
+    def __init__(
+        self,
+        ENABLE_GOAL_SUPERVISOR: bool = False,
+        DISTANCE_ERROR: float = 0.2,
+        PAUSE_TIME: float = 3.0,
+        # ACTIONS: dict[str, Endpoint] = {},
+    ):
+        self.ENABLE_GOAL_SUPERVISOR: bool = ENABLE_GOAL_SUPERVISOR
+        self.DISTANCE_ERROR: float = DISTANCE_ERROR  # meters
+        self.PAUSE_TIME: float = PAUSE_TIME # secs
+        # self.ACTIONS: dict[str, Endpoint] = ACTIONS
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        # if "ACTIONS" in data:
+        #     data["ACTIONS"] = {
+        #         key: Endpoint.from_dict(value) for key, value in data["ACTIONS"].items()
+        #     }
+        return cls(**data)
+
+    def to_dict(self):
+        data = self.__dict__.copy()
+        # data["ACTIONS"] = {key: value.to_dict() for key, value in self.ACTIONS.items()}
+        return data
+
 
 class Settings:
     def __init__(self):
         self.SECRET_KEY: str = SECRET_KEY #"yxio$l!%v7#mgh9736%2bsw$)+owmdt(_2q5_pvhaltz*s+p)#"
         # ROS TOPICS TO LISTEN
-        self.MAP: Map = Map()
         self.POSE_TO_SET: str = "last_mode"  # "last_mode", "same", ""
         # Topic to set the robot pose
         self.INITIAL_POSE: PoseTopic = PoseTopic(
@@ -244,9 +314,12 @@ class Settings:
         )
         self.BATTERY: Battery = Battery()
         self.CMD_VEL: CmdVel = CmdVel()
+        self.FRONTALFREE: FrontalFree = FrontalFree()
+        self.CMD_VEL_NAV: CmdVelNav = CmdVelNav()
 
         # functions managers
         self.FUNCTION_MANAGER: FunctionManager = FunctionManager()
+        self.NAVIGATION_MANAGER: NavigationManager = NavigationManager()
 
         self.load()
 
@@ -269,20 +342,33 @@ class Settings:
         self.CMD_VEL = (
             CmdVel.from_dict(data["CMD_VEL"]) if "CMD_VEL" in data else CmdVel()
         )
+        self.FRONTALFREE = (
+            FrontalFree.from_dict(data["FRONTALFREE"]) if "FRONTALFREE" in data else FrontalFree()
+        )
+        self.CMD_VEL_NAV = (
+            CmdVelNav.from_dict(data["CMD_VEL_NAV"]) if "CMD_VEL_NAV" in data else CmdVelNav()
+        )
         self.FUNCTION_MANAGER = (
             FunctionManager.from_dict(data["FUNCTION_MANAGER"])
             if "FUNCTION_MANAGER" in data
             else FunctionManager()
         )
+        self.NAVIGATION_MANAGER = (
+            NavigationManager.from_dict(data["NAVIGATION_MANAGER"])
+            if "NAVIGATION_MANAGER" in data
+            else NavigationManager()
+        )
 
     def to_dict(self):
         data = self.__dict__.copy()
-        data["MAP"] = self.MAP.to_dict()
         data["INITIAL_POSE"] = self.INITIAL_POSE.to_dict()
         data["POSE"] = self.POSE.to_dict()
         data["BATTERY"] = self.BATTERY.to_dict()
         data["CMD_VEL"] = self.CMD_VEL.to_dict()
+        data["FRONTALFREE"] = self.FRONTALFREE.to_dict()
+        data["CMD_VEL_NAV"] = self.CMD_VEL_NAV.to_dict()
         data["FUNCTION_MANAGER"] = self.FUNCTION_MANAGER.to_dict()
+        data["NAVIGATION_MANAGER"] = self.NAVIGATION_MANAGER.to_dict()
         return data
 
     def save(self):
@@ -305,67 +391,6 @@ class Settings:
             # save the settings to the file
             print("No settings file found, creating a new one.")
             self.save()
-
-"""
-class Endpoint:
-    def __init__(
-        self, URL: str = "", METHOD: str = "GET", PAYLOAD: dict = {}, TOKEN: str = ""
-    ):
-        self.URL: str = URL
-        self.METHOD: str = METHOD
-        self.PAYLOAD: dict = PAYLOAD
-        self.TOKEN: str = TOKEN
-
-    @classmethod
-    def from_dict(cls, data: dict):
-        return cls(**data)
-
-    def to_dict(self):
-        return self.__dict__.copy()
-
-    def request(
-        self, url=None, method=None, headers=None, payload=None, debug=False
-    ) -> dict:
-        try:
-            if headers is None:
-                headers = {}
-            headers.update({"Content-Type": "application/json"})
-            if url is None:
-                url = self.URL
-            if method is None:
-                method = self.METHOD
-            if payload is None:
-                payload = {}
-            if self.PAYLOAD:
-                payload.update(self.PAYLOAD)
-
-            if debug:
-                logger.info(f"method: {method}")
-                logger.info(f"url: {url}")
-                logger.info(f"headers: {headers}")
-                logger.info(f"payload[{type(payload)}]: {payload}")
-            response1 = requests.request(
-                method, url, headers=headers, data=json.dumps(payload)  # payload #
-            )
-            # check if response have json format
-            try:
-                response = response1.json()
-            except Exception:
-                response = {}
-                response["text"] = response1.text
-            response["status_code"] = response1.status_code
-        except ConnectionError as e:
-            logger.warning(f"NO HAY RESPUESTA:{e}")
-            response = {"status_code": 500, "error": str(e)}
-        except Exception as e:
-            logger.error(f"ERROR: {e}")
-            response = {"error": str(e)}
-
-        if debug:
-            logger.info(f"response: {response}")
-
-        return response
-"""
 
 
 settings = Settings()
