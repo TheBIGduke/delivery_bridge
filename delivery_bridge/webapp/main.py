@@ -1,31 +1,29 @@
 # python imports
 
 # 3rd party imports
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.requests import Request
+# Removed RedirectResponse import - not needed without web interface
+# Removed Request import - not needed without authentication
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.openapi.utils import get_openapi
-from sqlmodel import Session, select
+# Removed Session, select imports - no user authentication needed
 
 import socketio
 
 # Import the models to create the tables, don't remove this import even if it's not used
 from .apps.waypoints.models import Waypoint  # noqa: F401
-from .apps.users.models import User  # noqa: F401
+# Removed User model import - no user authentication needed for ESP32
 
 from .database import engine
-from .dependencies import NotAuthenticatedException, static_dir, media_dir
+# Removed NotAuthenticatedException import - no authentication needed
 from .urls import router
-from .apps.home.routers.login_router import login_manager
 from .socket_io import sio
 from .ws_no_prefix import NoPrefixNamespace
 
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI()
 
 # CORS
 app.add_middleware(
@@ -37,39 +35,33 @@ app.add_middleware(
 )
 
 ########################################################################################
-# swagger docs
+# API docs - removed authentication requirement for ESP32 access
 
 @app.get("/docs", tags=["docs"], include_in_schema=False)
-async def get_docs(request: Request):
-    if request.state.user is None:
-        raise NotAuthenticatedException()
+async def get_docs():
     return get_swagger_ui_html(
         openapi_url="/openapi.json",
-        title="Documentación Swagger",
+        title="Delivery Bridge API",
         swagger_favicon_url="/favicon.ico",
     )
 
 
 @app.get("/redoc", tags=["docs"], include_in_schema=False)
-async def get_redoc(request: Request):
-    if request.state.user is None:
-        raise NotAuthenticatedException()
+async def get_redoc():
     return get_redoc_html(
         openapi_url="/openapi.json",
-        title="Documentación ReDoc",
+        title="Delivery Bridge API",
         redoc_favicon_url="/favicon.ico",
     )
 
 
 @app.get("/openapi.json", tags=["docs"], include_in_schema=False)
-async def openapi(request: Request):
-    if request.state.user is None:
-        raise NotAuthenticatedException()
+async def openapi():
     return get_openapi(
         title="Delivery Bridge API",
         description=(
             "API para el Delivery Bridge, usado para la administración de la"
-            " navegación autónoma en un entorno WEB, interactuando con ROS 2."
+            " navegación autónoma, interactuando con ROS 2 via ESP32."
         ),
         version="1.0.0",
         routes=app.routes,
@@ -80,21 +72,7 @@ sio.register_namespace(NoPrefixNamespace("/"))
 sio_asgi_app = socketio.ASGIApp(socketio_server=sio, other_asgi_app=app)
 
 
-login_manager.useRequest(app)
-
-
-@login_manager.user_loader()
-def get_user(username: str):
-    with Session(engine) as session:
-        user = session.exec(select(User).where(User.username == username)).first()
-        return user
-
-
-# mount static files
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-# mount media files
-app.mount("/media", StaticFiles(directory=media_dir), name="media")
+# Removed login manager and static file mounting - not needed for ESP32 API access
 
 # include routers
 app.include_router(router)
@@ -105,10 +83,7 @@ app.add_websocket_route("/socket.io/", sio_asgi_app)
 ########################################################################################
 
 
-@app.exception_handler(NotAuthenticatedException)
-def auth_exception_handler(request: Request, exc: NotAuthenticatedException):
-    # logger.info("Redirect to login page because user is not logged")
-    return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+# Removed authentication exception handler - not needed for ESP32 API access
 
 
 ########################################################################################

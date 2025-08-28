@@ -8,8 +8,7 @@ from delivery_bridge.webapp.main import sio
 from delivery_bridge.modules.function_manager import function_manager
 
 from delivery_bridge.webapp.database import createDatabase
-from delivery_bridge.webapp.apps.users.cruds.user_cruds import user_crud
-from delivery_bridge.webapp.apps.users.models import User
+# Removed user imports - no authentication needed for ESP32
 
 
 def main(args=None):
@@ -21,14 +20,7 @@ def main(args=None):
     else:
         base_node.logger.error("Database creation failed.")
 
-    # Create the default admin user if it doesn't exist
-    users: list[User] = user_crud.get_by_field("is_admin", True, allows_multiple=True)
-    if len(users) == 0:
-        base_node.logger.info("No admin user found, creating default user")
-        user = User(username="admin", is_admin=True)
-        user.set_password("admin")
-        user.save()
-        base_node.logger.info("Default user created")
+    # Removed user creation - no authentication needed for ESP32
 
     
     # Start the webapp
